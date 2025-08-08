@@ -1,8 +1,21 @@
+import { db } from '../db';
+import { todosTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type DeleteTodoInput } from '../schema';
 
 export async function deleteTodo(input: DeleteTodoInput): Promise<{ success: boolean }> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a todo item from the database.
-    // Returns a success status to indicate whether the deletion was successful.
-    return Promise.resolve({ success: true });
+  try {
+    // Delete the todo record
+    const result = await db.delete(todosTable)
+      .where(eq(todosTable.id, input.id))
+      .execute();
+
+    // Check if any rows were affected (deleted)
+    const success = result.rowCount !== null && result.rowCount > 0;
+    
+    return { success };
+  } catch (error) {
+    console.error('Todo deletion failed:', error);
+    throw error;
+  }
 }
