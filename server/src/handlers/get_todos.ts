@@ -1,19 +1,23 @@
 import { db } from '../db';
 import { todosTable } from '../db/schema';
-import { type Todo } from '../schema';
 import { desc } from 'drizzle-orm';
+import { type Todo } from '../schema';
 
 export const getTodos = async (): Promise<Todo[]> => {
   try {
-    // Query all todos ordered by creation date (newest first)
     const results = await db.select()
       .from(todosTable)
       .orderBy(desc(todosTable.created_at))
       .execute();
 
-    return results;
+    return results.map(todo => ({
+      id: todo.id,
+      title: todo.title,
+      completed: todo.completed,
+      created_at: todo.created_at
+    }));
   } catch (error) {
-    console.error('Failed to fetch todos:', error);
+    console.error('Failed to get todos:', error);
     throw error;
   }
 };

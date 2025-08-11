@@ -1,35 +1,36 @@
 import { db } from '../db';
 import { todosTable } from '../db/schema';
+import { eq, not } from 'drizzle-orm';
 import { type ToggleTodoInput, type Todo } from '../schema';
-import { eq } from 'drizzle-orm';
 
 export const toggleTodo = async (input: ToggleTodoInput): Promise<Todo> => {
   try {
-    // First, get the current todo to check its completion status
-    const existingTodos = await db.select()
+    // First get the current todo to toggle its completion status
+    const currentTodo = await db.select()
       .from(todosTable)
       .where(eq(todosTable.id, input.id))
       .execute();
 
-    if (existingTodos.length === 0) {
+    if (currentTodo.length === 0) {
       throw new Error(`Todo with id ${input.id} not found`);
     }
 
-    const existingTodo = existingTodos[0];
-    const newCompletedStatus = !existingTodo.completed;
-
-    // Update the todo with the toggled completion status
+    // Toggle the completed status
     const result = await db.update(todosTable)
-      .set({
-        completed: newCompletedStatus
-      })
+      .set({ completed: !currentTodo[0].completed })
       .where(eq(todosTable.id, input.id))
       .returning()
       .execute();
 
-    return result[0];
+    const todo = result[0];
+    return {
+      id: todo.id,
+      title: todo.title,
+      completed: todo.completed,
+      created_at: todo.created_at
+    };
   } catch (error) {
-    console.error('Toggle todo failed:', error);
+    console.error('Todo toggle failed:', error);
     throw error;
   }
 };

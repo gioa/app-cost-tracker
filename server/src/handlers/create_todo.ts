@@ -4,19 +4,20 @@ import { type CreateTodoInput, type Todo } from '../schema';
 
 export const createTodo = async (input: CreateTodoInput): Promise<Todo> => {
   try {
-    // Insert todo record
     const result = await db.insert(todosTable)
       .values({
         title: input.title,
-        completed: false
+        completed: false // Default value
       })
       .returning()
       .execute();
 
     const todo = result[0];
     return {
-      ...todo,
-      created_at: new Date(todo.created_at) // Ensure proper Date object
+      id: todo.id,
+      title: todo.title,
+      completed: todo.completed,
+      created_at: todo.created_at
     };
   } catch (error) {
     console.error('Todo creation failed:', error);

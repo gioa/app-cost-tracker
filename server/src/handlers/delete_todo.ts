@@ -3,19 +3,27 @@ import { todosTable } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { type DeleteTodoInput } from '../schema';
 
-export async function deleteTodo(input: DeleteTodoInput): Promise<{ success: boolean }> {
+export const deleteTodo = async (input: DeleteTodoInput): Promise<{ success: boolean; id?: number }> => {
   try {
-    // Delete the todo record
     const result = await db.delete(todosTable)
       .where(eq(todosTable.id, input.id))
+      .returning({ id: todosTable.id })
       .execute();
 
-    // Check if any rows were affected (deleted)
-    const success = result.rowCount !== null && result.rowCount > 0;
-    
-    return { success };
+    if (result.length === 0) {
+      return {
+        success: false
+      };
+    }
+
+    return {
+      success: true,
+      id: result[0].id
+    };
   } catch (error) {
     console.error('Todo deletion failed:', error);
-    throw error;
+    return {
+      success: false
+    };
   }
-}
+};
